@@ -80,6 +80,20 @@ function App() {
     setIsFormOpen(false)
   }
 
+  function handleDelete(id: number) {
+    const shouldDelete = window.confirm(
+      'Are you sure you want to delete this application?',
+    )
+
+    if (!shouldDelete) {
+      return
+    }
+
+    setApplications((currentApplications) =>
+      currentApplications.filter((application) => application.id !== id),
+    )
+  }
+
   return (
     <main className="app">
       <header className="header">
@@ -170,6 +184,7 @@ function App() {
                 <th>Role</th>
                 <th>Status</th>
                 <th>Applied</th>
+                <th>Actions</th>
               </tr>
             </thead>
 
@@ -186,6 +201,15 @@ function App() {
                     </span>
                   </td>
                   <td>{application.appliedDate}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="delete-button"
+                      onClick={() => handleDelete(application.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
