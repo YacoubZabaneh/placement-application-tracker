@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import './App.css'
 
 type ApplicationStatus = 'Applied' | 'Interview' | 'Offer' | 'Rejected'
+type StatusFilter = 'All' | ApplicationStatus
+type SortOrder = 'newest' | 'oldest'
 
 type Application = {
   id: number
@@ -41,6 +43,9 @@ function App() {
     useState<Application | null>(null)
   const [applications, setApplications] =
     useState<Application[]>(initialApplications)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
   const interviewCount = applications.filter(
     (application) => application.status === 'Interview',
@@ -49,6 +54,28 @@ function App() {
   const offerCount = applications.filter(
     (application) => application.status === 'Offer',
   ).length
+
+  const visibleApplications = applications
+    .filter((application) => {
+      const searchText = searchTerm.toLowerCase()
+
+      const matchesSearch =
+        application.company.toLowerCase().includes(searchText) ||
+        application.role.toLowerCase().includes(searchText)
+
+      const matchesStatus =
+        statusFilter === 'All' || application.status === statusFilter
+
+      return matchesSearch && matchesStatus
+    })
+    .sort((firstApplication, secondApplication) => {
+      const firstDate = new Date(firstApplication.appliedDate).getTime()
+      const secondDate = new Date(secondApplication.appliedDate).getTime()
+
+      return sortOrder === 'newest'
+        ? secondDate - firstDate
+        : firstDate - secondDate
+    })
 
   function openNewApplicationForm() {
     setEditingApplication(null)
@@ -127,6 +154,12 @@ function App() {
     if (editingApplication?.id === id) {
       closeForm()
     }
+  }
+
+  function clearFilters() {
+    setSearchTerm('')
+    setStatusFilter('All')
+    setSortOrder('newest')
   }
 
   function formatDate(date: string) {
@@ -235,7 +268,63 @@ function App() {
       </section>
 
       <section className="applications">
-        <h2>Your applications</h2>
+        <div className="applications-heading">
+          <div>
+            <h2>Your applications</h2>
+            <p>
+              Showing {visibleApplications.length} of {applications.length}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="clear-button"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        <div className="filters">
+          <label>
+            Search
+            <input
+              type="search"
+              placeholder="Search company or role"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </label>
+
+          <label>
+            Status
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(event.target.value as StatusFilter)
+              }
+            >
+              <option value="All">All statuses</option>
+              <option value="Applied">Applied</option>
+              <option value="Interview">Interview</option>
+              <option value="Offer">Offer</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </label>
+
+          <label>
+            Sort by date
+            <select
+              value={sortOrder}
+              onChange={(event) =>
+                setSortOrder(event.target.value as SortOrder)
+              }
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </label>
+        </div>
 
         <div className="table-container">
           <table>
@@ -250,7 +339,7 @@ function App() {
             </thead>
 
             <tbody>
-              {applications.map((application) => (
+              {visibleApplications.map((application) => (
                 <tr key={application.id}>
                   <td>{application.company}</td>
                   <td>{application.role}</td>
@@ -283,6 +372,14 @@ function App() {
                   </td>
                 </tr>
               ))}
+
+              {visibleApplications.length === 0 && (
+                <tr>
+                  <td className="empty-state" colSpan={5}>
+                    No applications match your search or filters.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -292,4 +389,3 @@ function App() {
 }
 
 export default App
-

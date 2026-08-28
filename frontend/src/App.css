@@ -4,11 +4,15 @@
   padding: 64px 0;
 }
 
-.header {
+.header,
+.applications-heading {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 32px;
+}
+
+.header {
   margin-bottom: 40px;
 }
 
@@ -62,14 +66,17 @@
   gap: 20px;
 }
 
-.application-form label {
+.application-form label,
+.filters label {
   display: grid;
   gap: 8px;
   font-weight: 700;
 }
 
 .application-form input,
-.application-form select {
+.application-form select,
+.filters input,
+.filters select {
   width: 100%;
   border: 1px solid #ccd2df;
   border-radius: 8px;
@@ -115,7 +122,8 @@
   font-size: 2rem;
 }
 
-.stat-card p {
+.stat-card p,
+.applications-heading p {
   margin: 0;
   color: #687086;
 }
@@ -124,8 +132,28 @@
   padding: 28px;
 }
 
-.applications h2 {
-  margin: 0 0 12px;
+.applications-heading h2 {
+  margin: 0 0 6px;
+}
+
+.clear-button {
+  border: 0;
+  padding: 8px;
+  color: #5b5bd6;
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clear-button:hover {
+  text-decoration: underline;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
 }
 
 .table-container {
@@ -212,18 +240,26 @@ td:first-child {
   text-decoration: underline;
 }
 
+.empty-state {
+  padding: 40px;
+  color: #687086;
+  text-align: center;
+}
+
 @media (max-width: 700px) {
   .app {
     width: min(100% - 24px, 1100px);
     padding: 32px 0;
   }
 
-  .header {
+  .header,
+  .applications-heading {
     flex-direction: column;
   }
 
   .application-form form,
-  .stats {
+  .stats,
+  .filters {
     grid-template-columns: 1fr;
   }
 }
