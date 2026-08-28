@@ -4,7 +4,7 @@ A full-stack web application for organising placement and internship application
 
 ## Live Application
 
-[Open the live application](YOUR_VERCEL_URL)
+[Open the live application](https://placement-application-tracker.vercel.app)
 
 > The backend uses Render's free tier, so the first request may take up to one minute while the service wakes up.
 
