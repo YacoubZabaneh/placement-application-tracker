@@ -17,26 +17,28 @@ const initialApplications: Application[] = [
     company: 'Bloomberg',
     role: 'Software Engineering Placement',
     status: 'Applied',
-    appliedDate: '25 August 2026',
+    appliedDate: '2026-08-25',
   },
   {
     id: 2,
     company: 'IBM',
     role: 'Technology Placement',
     status: 'Interview',
-    appliedDate: '20 August 2026',
+    appliedDate: '2026-08-20',
   },
   {
     id: 3,
     company: 'Microsoft',
     role: 'Software Engineer Intern',
     status: 'Offer',
-    appliedDate: '14 August 2026',
+    appliedDate: '2026-08-14',
   },
 ]
 
 function App() {
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingApplication, setEditingApplication] =
+    useState<Application | null>(null)
   const [applications, setApplications] =
     useState<Application[]>(initialApplications)
 
@@ -48,36 +50,65 @@ function App() {
     (application) => application.status === 'Offer',
   ).length
 
+  function openNewApplicationForm() {
+    setEditingApplication(null)
+    setIsFormOpen(true)
+  }
+
+  function openEditForm(application: Application) {
+    setEditingApplication(application)
+    setIsFormOpen(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function closeForm() {
+    setEditingApplication(null)
+    setIsFormOpen(false)
+  }
+
+  function handleFormButton() {
+    if (isFormOpen) {
+      closeForm()
+    } else {
+      openNewApplicationForm()
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const form = event.currentTarget
     const formData = new FormData(form)
-    const selectedDate = String(formData.get('appliedDate'))
 
-    const formattedDate = new Date(
-      `${selectedDate}T00:00:00`,
-    ).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-
-    const newApplication: Application = {
-      id: Date.now(),
+    const applicationData = {
       company: String(formData.get('company')),
       role: String(formData.get('role')),
       status: String(formData.get('status')) as ApplicationStatus,
-      appliedDate: formattedDate,
+      appliedDate: String(formData.get('appliedDate')),
     }
 
-    setApplications((currentApplications) => [
-      ...currentApplications,
-      newApplication,
-    ])
+    if (editingApplication) {
+      setApplications((currentApplications) =>
+        currentApplications.map((application) =>
+          application.id === editingApplication.id
+            ? { ...applicationData, id: editingApplication.id }
+            : application,
+        ),
+      )
+    } else {
+      const newApplication: Application = {
+        id: Date.now(),
+        ...applicationData,
+      }
+
+      setApplications((currentApplications) => [
+        ...currentApplications,
+        newApplication,
+      ])
+    }
 
     form.reset()
-    setIsFormOpen(false)
+    closeForm()
   }
 
   function handleDelete(id: number) {
@@ -92,6 +123,18 @@ function App() {
     setApplications((currentApplications) =>
       currentApplications.filter((application) => application.id !== id),
     )
+
+    if (editingApplication?.id === id) {
+      closeForm()
+    }
+  }
+
+  function formatDate(date: string) {
+    return new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
   }
 
   return (
@@ -103,25 +146,30 @@ function App() {
           <p>Organise your applications, interviews, deadlines, and offers.</p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsFormOpen((currentValue) => !currentValue)}
-        >
+        <button type="button" onClick={handleFormButton}>
           {isFormOpen ? 'Close form' : 'Add application'}
         </button>
       </header>
 
       {isFormOpen && (
         <section className="application-form">
-          <h2>Add a new application</h2>
+          <h2>
+            {editingApplication
+              ? 'Edit application'
+              : 'Add a new application'}
+          </h2>
 
-          <form onSubmit={handleSubmit}>
+          <form
+            key={editingApplication?.id ?? 'new'}
+            onSubmit={handleSubmit}
+          >
             <label>
               Company
               <input
                 type="text"
                 name="company"
                 placeholder="e.g. Bloomberg"
+                defaultValue={editingApplication?.company ?? ''}
                 required
               />
             </label>
@@ -132,13 +180,17 @@ function App() {
                 type="text"
                 name="role"
                 placeholder="e.g. Software Engineering Placement"
+                defaultValue={editingApplication?.role ?? ''}
                 required
               />
             </label>
 
             <label>
               Status
-              <select name="status" defaultValue="Applied">
+              <select
+                name="status"
+                defaultValue={editingApplication?.status ?? 'Applied'}
+              >
                 <option value="Applied">Applied</option>
                 <option value="Interview">Interview</option>
                 <option value="Offer">Offer</option>
@@ -148,10 +200,19 @@ function App() {
 
             <label>
               Application date
-              <input type="date" name="appliedDate" required />
+              <input
+                type="date"
+                name="appliedDate"
+                defaultValue={editingApplication?.appliedDate ?? ''}
+                required
+              />
             </label>
 
-            <button type="submit">Save application</button>
+            <button type="submit">
+              {editingApplication
+                ? 'Update application'
+                : 'Save application'}
+            </button>
           </form>
         </section>
       )}
@@ -200,15 +261,25 @@ function App() {
                       {application.status}
                     </span>
                   </td>
-                  <td>{application.appliedDate}</td>
+                  <td>{formatDate(application.appliedDate)}</td>
                   <td>
-                    <button
-                      type="button"
-                      className="delete-button"
-                      onClick={() => handleDelete(application.id)}
-                    >
-                      Delete
-                    </button>
+                    <div className="actions">
+                      <button
+                        type="button"
+                        className="edit-button"
+                        onClick={() => openEditForm(application)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        className="delete-button"
+                        onClick={() => handleDelete(application.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

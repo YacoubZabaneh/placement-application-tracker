@@ -115,8 +115,7 @@
   font-size: 2rem;
 }
 
-.stat-card p,
-.applications p {
+.stat-card p {
   margin: 0;
   color: #687086;
 }
@@ -185,15 +184,30 @@ td:first-child {
   background: #fde5e5;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-button,
 .delete-button {
   border: 0;
-  padding: 6px 10px;
-  color: #a33030;
+  padding: 6px 8px;
   background: transparent;
   font-weight: 700;
   cursor: pointer;
 }
 
+.edit-button {
+  color: #2855a5;
+}
+
+.delete-button {
+  color: #a33030;
+}
+
+.edit-button:hover,
 .delete-button:hover {
   text-decoration: underline;
 }
