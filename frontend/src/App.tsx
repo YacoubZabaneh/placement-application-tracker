@@ -1,7 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ApplicationFilters from './components/ApplicationFilters'
 import ApplicationForm from './components/ApplicationForm'
 import ApplicationTable from './components/ApplicationTable'
+import {
+  createApplication,
+  deleteApplication as deleteApplicationRequest,
+  getApplications,
+  updateApplication,
+} from './services/applicationApi'
 import type {
   Application,
   ApplicationData,
@@ -10,39 +16,34 @@ import type {
 } from './types'
 import './App.css'
 
-const initialApplications: Application[] = [
-  {
-    id: 1,
-    company: 'Bloomberg',
-    role: 'Software Engineering Placement',
-    status: 'Applied',
-    appliedDate: '2026-08-25',
-  },
-  {
-    id: 2,
-    company: 'IBM',
-    role: 'Technology Placement',
-    status: 'Interview',
-    appliedDate: '2026-08-20',
-  },
-  {
-    id: 3,
-    company: 'Microsoft',
-    role: 'Software Engineer Intern',
-    status: 'Offer',
-    appliedDate: '2026-08-14',
-  },
-]
-
 function App() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingApplication, setEditingApplication] =
     useState<Application | null>(null)
-  const [applications, setApplications] =
-    useState<Application[]>(initialApplications)
+  const [applications, setApplications] = useState<Application[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    async function loadApplications() {
+      try {
+        setErrorMessage('')
+        const savedApplications = await getApplications()
+        setApplications(savedApplications)
+      } catch {
+        setErrorMessage(
+          'Could not load applications. Make sure the Django server is running.',
+        )
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadApplications()
+  }, [])
 
   const interviewCount = applications.filter(
     (application) => application.status === 'Interview',
@@ -98,31 +99,42 @@ function App() {
     }
   }
 
-  function handleSave(applicationData: ApplicationData) {
-    if (editingApplication) {
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === editingApplication.id
-            ? { ...applicationData, id: editingApplication.id }
-            : application,
-        ),
-      )
-    } else {
-      const newApplication: Application = {
-        id: Date.now(),
-        ...applicationData,
+  async function handleSave(applicationData: ApplicationData) {
+    try {
+      setErrorMessage('')
+
+      if (editingApplication) {
+        const updatedApplication = await updateApplication(
+          editingApplication.id,
+          applicationData,
+        )
+
+        setApplications((currentApplications) =>
+          currentApplications.map((application) =>
+            application.id === updatedApplication.id
+              ? updatedApplication
+              : application,
+          ),
+        )
+      } else {
+        const createdApplication =
+          await createApplication(applicationData)
+
+        setApplications((currentApplications) => [
+          ...currentApplications,
+          createdApplication,
+        ])
       }
 
-      setApplications((currentApplications) => [
-        ...currentApplications,
-        newApplication,
-      ])
+      closeForm()
+    } catch {
+      setErrorMessage(
+        'Could not save the application. Please try again.',
+      )
     }
-
-    closeForm()
   }
 
-  function handleDelete(id: number) {
+  async function handleDelete(id: number) {
     const shouldDelete = window.confirm(
       'Are you sure you want to delete this application?',
     )
@@ -131,12 +143,21 @@ function App() {
       return
     }
 
-    setApplications((currentApplications) =>
-      currentApplications.filter((application) => application.id !== id),
-    )
+    try {
+      setErrorMessage('')
+      await deleteApplicationRequest(id)
 
-    if (editingApplication?.id === id) {
-      closeForm()
+      setApplications((currentApplications) =>
+        currentApplications.filter((application) => application.id !== id),
+      )
+
+      if (editingApplication?.id === id) {
+        closeForm()
+      }
+    } catch {
+      setErrorMessage(
+        'Could not delete the application. Please try again.',
+      )
     }
   }
 
@@ -159,6 +180,12 @@ function App() {
           {isFormOpen ? 'Close form' : 'Add application'}
         </button>
       </header>
+
+      {errorMessage && (
+        <p className="error-message" role="alert">
+          {errorMessage}
+        </p>
+      )}
 
       {isFormOpen && (
         <ApplicationForm
@@ -212,11 +239,15 @@ function App() {
           onSortChange={setSortOrder}
         />
 
-        <ApplicationTable
-          applications={visibleApplications}
-          onEdit={openEditForm}
-          onDelete={handleDelete}
-        />
+        {isLoading ? (
+          <p className="loading-message">Loading applications...</p>
+        ) : (
+          <ApplicationTable
+            applications={visibleApplications}
+            onEdit={openEditForm}
+            onDelete={handleDelete}
+          />
+        )}
       </section>
     </main>
   )
