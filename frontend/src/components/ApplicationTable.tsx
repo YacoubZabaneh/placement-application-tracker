@@ -1,0 +1,83 @@
+import type { Application } from '../types'
+
+type ApplicationTableProps = {
+  applications: Application[]
+  onEdit: (application: Application) => void
+  onDelete: (id: number) => void
+}
+
+function formatDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function ApplicationTable({
+  applications,
+  onEdit,
+  onDelete,
+}: ApplicationTableProps) {
+  return (
+    <div className="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Applied</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {applications.map((application) => (
+            <tr key={application.id}>
+              <td>{application.company}</td>
+              <td>{application.role}</td>
+              <td>
+                <span
+                  className={`status status-${application.status.toLowerCase()}`}
+                >
+                  {application.status}
+                </span>
+              </td>
+              <td>{formatDate(application.appliedDate)}</td>
+              <td>
+                <div className="actions">
+                  <button
+                    type="button"
+                    className="edit-button"
+                    onClick={() => onEdit(application)}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    className="delete-button"
+                    onClick={() => onDelete(application.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+
+          {applications.length === 0 && (
+            <tr>
+              <td className="empty-state" colSpan={5}>
+                No applications match your search or filters.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export default ApplicationTable

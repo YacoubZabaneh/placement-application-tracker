@@ -1,17 +1,14 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
+import ApplicationFilters from './components/ApplicationFilters'
+import ApplicationForm from './components/ApplicationForm'
+import ApplicationTable from './components/ApplicationTable'
+import type {
+  Application,
+  ApplicationData,
+  SortOrder,
+  StatusFilter,
+} from './types'
 import './App.css'
-
-type ApplicationStatus = 'Applied' | 'Interview' | 'Offer' | 'Rejected'
-type StatusFilter = 'All' | ApplicationStatus
-type SortOrder = 'newest' | 'oldest'
-
-type Application = {
-  id: number
-  company: string
-  role: string
-  status: ApplicationStatus
-  appliedDate: string
-}
 
 const initialApplications: Application[] = [
   {
@@ -101,19 +98,7 @@ function App() {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const form = event.currentTarget
-    const formData = new FormData(form)
-
-    const applicationData = {
-      company: String(formData.get('company')),
-      role: String(formData.get('role')),
-      status: String(formData.get('status')) as ApplicationStatus,
-      appliedDate: String(formData.get('appliedDate')),
-    }
-
+  function handleSave(applicationData: ApplicationData) {
     if (editingApplication) {
       setApplications((currentApplications) =>
         currentApplications.map((application) =>
@@ -134,7 +119,6 @@ function App() {
       ])
     }
 
-    form.reset()
     closeForm()
   }
 
@@ -162,14 +146,6 @@ function App() {
     setSortOrder('newest')
   }
 
-  function formatDate(date: string) {
-    return new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })
-  }
-
   return (
     <main className="app">
       <header className="header">
@@ -185,69 +161,11 @@ function App() {
       </header>
 
       {isFormOpen && (
-        <section className="application-form">
-          <h2>
-            {editingApplication
-              ? 'Edit application'
-              : 'Add a new application'}
-          </h2>
-
-          <form
-            key={editingApplication?.id ?? 'new'}
-            onSubmit={handleSubmit}
-          >
-            <label>
-              Company
-              <input
-                type="text"
-                name="company"
-                placeholder="e.g. Bloomberg"
-                defaultValue={editingApplication?.company ?? ''}
-                required
-              />
-            </label>
-
-            <label>
-              Role
-              <input
-                type="text"
-                name="role"
-                placeholder="e.g. Software Engineering Placement"
-                defaultValue={editingApplication?.role ?? ''}
-                required
-              />
-            </label>
-
-            <label>
-              Status
-              <select
-                name="status"
-                defaultValue={editingApplication?.status ?? 'Applied'}
-              >
-                <option value="Applied">Applied</option>
-                <option value="Interview">Interview</option>
-                <option value="Offer">Offer</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </label>
-
-            <label>
-              Application date
-              <input
-                type="date"
-                name="appliedDate"
-                defaultValue={editingApplication?.appliedDate ?? ''}
-                required
-              />
-            </label>
-
-            <button type="submit">
-              {editingApplication
-                ? 'Update application'
-                : 'Save application'}
-            </button>
-          </form>
-        </section>
+        <ApplicationForm
+          key={editingApplication?.id ?? 'new'}
+          editingApplication={editingApplication}
+          onSave={handleSave}
+        />
       )}
 
       <section className="stats" aria-label="Application summary">
@@ -285,104 +203,20 @@ function App() {
           </button>
         </div>
 
-        <div className="filters">
-          <label>
-            Search
-            <input
-              type="search"
-              placeholder="Search company or role"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </label>
+        <ApplicationFilters
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          sortOrder={sortOrder}
+          onSearchChange={setSearchTerm}
+          onStatusChange={setStatusFilter}
+          onSortChange={setSortOrder}
+        />
 
-          <label>
-            Status
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value as StatusFilter)
-              }
-            >
-              <option value="All">All statuses</option>
-              <option value="Applied">Applied</option>
-              <option value="Interview">Interview</option>
-              <option value="Offer">Offer</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-          </label>
-
-          <label>
-            Sort by date
-            <select
-              value={sortOrder}
-              onChange={(event) =>
-                setSortOrder(event.target.value as SortOrder)
-              }
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-            </select>
-          </label>
-        </div>
-
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Applied</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {visibleApplications.map((application) => (
-                <tr key={application.id}>
-                  <td>{application.company}</td>
-                  <td>{application.role}</td>
-                  <td>
-                    <span
-                      className={`status status-${application.status.toLowerCase()}`}
-                    >
-                      {application.status}
-                    </span>
-                  </td>
-                  <td>{formatDate(application.appliedDate)}</td>
-                  <td>
-                    <div className="actions">
-                      <button
-                        type="button"
-                        className="edit-button"
-                        onClick={() => openEditForm(application)}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        className="delete-button"
-                        onClick={() => handleDelete(application.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {visibleApplications.length === 0 && (
-                <tr>
-                  <td className="empty-state" colSpan={5}>
-                    No applications match your search or filters.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ApplicationTable
+          applications={visibleApplications}
+          onEdit={openEditForm}
+          onDelete={handleDelete}
+        />
       </section>
     </main>
   )
