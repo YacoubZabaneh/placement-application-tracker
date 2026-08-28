@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 import ApplicationFilters from './components/ApplicationFilters'
 import ApplicationForm from './components/ApplicationForm'
 import ApplicationTable from './components/ApplicationTable'
+import AuthForm from './components/AuthForm'
+import {
+  clearAuthentication,
+  getStoredUser,
+  type AuthUser,
+} from './services/authApi'
 import {
   createApplication,
   deleteApplication as deleteApplicationRequest,
@@ -17,6 +23,7 @@ import type {
 import './App.css'
 
 function App() {
+  const [user, setUser] = useState<AuthUser | null>(getStoredUser)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingApplication, setEditingApplication] =
     useState<Application | null>(null)
@@ -28,14 +35,20 @@ function App() {
   const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
     async function loadApplications() {
       try {
+        setIsLoading(true)
         setErrorMessage('')
         const savedApplications = await getApplications()
         setApplications(savedApplications)
       } catch {
         setErrorMessage(
-          'Could not load applications. Make sure the Django server is running.',
+          'Could not load applications. Please log in again.',
         )
       } finally {
         setIsLoading(false)
@@ -43,7 +56,11 @@ function App() {
     }
 
     loadApplications()
-  }, [])
+  }, [user])
+
+  if (!user) {
+    return <AuthForm onAuthenticated={setUser} />
+  }
 
   const interviewCount = applications.filter(
     (application) => application.status === 'Interview',
@@ -75,11 +92,6 @@ function App() {
         : firstDate - secondDate
     })
 
-  function openNewApplicationForm() {
-    setEditingApplication(null)
-    setIsFormOpen(true)
-  }
-
   function openEditForm(application: Application) {
     setEditingApplication(application)
     setIsFormOpen(true)
@@ -91,74 +103,52 @@ function App() {
     setIsFormOpen(false)
   }
 
-  function handleFormButton() {
-    if (isFormOpen) {
-      closeForm()
-    } else {
-      openNewApplicationForm()
-    }
-  }
-
   async function handleSave(applicationData: ApplicationData) {
     try {
       setErrorMessage('')
 
       if (editingApplication) {
-        const updatedApplication = await updateApplication(
+        const updated = await updateApplication(
           editingApplication.id,
           applicationData,
         )
 
-        setApplications((currentApplications) =>
-          currentApplications.map((application) =>
-            application.id === updatedApplication.id
-              ? updatedApplication
-              : application,
+        setApplications((current) =>
+          current.map((application) =>
+            application.id === updated.id ? updated : application,
           ),
         )
       } else {
-        const createdApplication =
-          await createApplication(applicationData)
-
-        setApplications((currentApplications) => [
-          ...currentApplications,
-          createdApplication,
-        ])
+        const created = await createApplication(applicationData)
+        setApplications((current) => [...current, created])
       }
 
       closeForm()
     } catch {
-      setErrorMessage(
-        'Could not save the application. Please try again.',
-      )
+      setErrorMessage('Could not save the application.')
     }
   }
 
   async function handleDelete(id: number) {
-    const shouldDelete = window.confirm(
-      'Are you sure you want to delete this application?',
-    )
-
-    if (!shouldDelete) {
+    if (!window.confirm('Delete this application?')) {
       return
     }
 
     try {
-      setErrorMessage('')
       await deleteApplicationRequest(id)
-
-      setApplications((currentApplications) =>
-        currentApplications.filter((application) => application.id !== id),
+      setApplications((current) =>
+        current.filter((application) => application.id !== id),
       )
-
-      if (editingApplication?.id === id) {
-        closeForm()
-      }
     } catch {
-      setErrorMessage(
-        'Could not delete the application. Please try again.',
-      )
+      setErrorMessage('Could not delete the application.')
     }
+  }
+
+  function handleLogout() {
+    clearAuthentication()
+    setUser(null)
+    setApplications([])
+    closeForm()
   }
 
   function clearFilters() {
@@ -173,12 +163,32 @@ function App() {
         <div>
           <p className="eyebrow">PLACEMENT SEARCH</p>
           <h1>Placement Application Tracker</h1>
-          <p>Organise your applications, interviews, deadlines, and offers.</p>
+          <p>Signed in as {user.username}</p>
         </div>
 
-        <button type="button" onClick={handleFormButton}>
-          {isFormOpen ? 'Close form' : 'Add application'}
-        </button>
+        <div className="header-actions">
+          <button
+            type="button"
+            className="logout-button"
+            onClick={handleLogout}
+          >
+            Log out
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (isFormOpen) {
+                closeForm()
+              } else {
+                setEditingApplication(null)
+                setIsFormOpen(true)
+              }
+            }}
+          >
+            {isFormOpen ? 'Close form' : 'Add application'}
+          </button>
+        </div>
       </header>
 
       {errorMessage && (
@@ -195,17 +205,15 @@ function App() {
         />
       )}
 
-      <section className="stats" aria-label="Application summary">
+      <section className="stats">
         <article className="stat-card">
           <h2>{applications.length}</h2>
           <p>Total applications</p>
         </article>
-
         <article className="stat-card">
           <h2>{interviewCount}</h2>
           <p>Interviews</p>
         </article>
-
         <article className="stat-card">
           <h2>{offerCount}</h2>
           <p>Offers</p>

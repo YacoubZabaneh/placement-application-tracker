@@ -3,6 +3,7 @@ import type {
   ApplicationData,
   ApplicationStatus,
 } from '../types'
+import { getToken } from './authApi'
 
 const API_URL = 'http://127.0.0.1:8765/api/applications/'
 
@@ -12,6 +13,22 @@ type ApiApplication = {
   role: string
   status: ApplicationStatus
   applied_date: string
+  deadline: string | null
+  job_url: string
+  notes: string
+}
+
+function getHeaders() {
+  const token = getToken()
+
+  if (!token) {
+    throw new Error('You must log in first.')
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Token ${token}`,
+  }
 }
 
 function convertFromApi(application: ApiApplication): Application {
@@ -21,6 +38,9 @@ function convertFromApi(application: ApiApplication): Application {
     role: application.role,
     status: application.status,
     appliedDate: application.applied_date,
+    deadline: application.deadline,
+    jobUrl: application.job_url,
+    notes: application.notes,
   }
 }
 
@@ -30,6 +50,9 @@ function convertToApi(application: ApplicationData) {
     role: application.role,
     status: application.status,
     applied_date: application.appliedDate,
+    deadline: application.deadline || null,
+    job_url: application.jobUrl,
+    notes: application.notes,
   }
 }
 
@@ -40,7 +63,9 @@ async function checkResponse(response: Response) {
 }
 
 export async function getApplications(): Promise<Application[]> {
-  const response = await fetch(API_URL)
+  const response = await fetch(API_URL, {
+    headers: getHeaders(),
+  })
 
   await checkResponse(response)
 
@@ -54,17 +79,13 @@ export async function createApplication(
 ): Promise<Application> {
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
     body: JSON.stringify(convertToApi(application)),
   })
 
   await checkResponse(response)
 
-  const createdApplication: ApiApplication = await response.json()
-
-  return convertFromApi(createdApplication)
+  return convertFromApi(await response.json())
 }
 
 export async function updateApplication(
@@ -73,22 +94,19 @@ export async function updateApplication(
 ): Promise<Application> {
   const response = await fetch(`${API_URL}${id}/`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
     body: JSON.stringify(convertToApi(application)),
   })
 
   await checkResponse(response)
 
-  const updatedApplication: ApiApplication = await response.json()
-
-  return convertFromApi(updatedApplication)
+  return convertFromApi(await response.json())
 }
 
 export async function deleteApplication(id: number): Promise<void> {
   const response = await fetch(`${API_URL}${id}/`, {
     method: 'DELETE',
+    headers: getHeaders(),
   })
 
   await checkResponse(response)

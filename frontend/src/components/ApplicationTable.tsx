@@ -6,10 +6,14 @@ type ApplicationTableProps = {
   onDelete: (id: number) => void
 }
 
-function formatDate(date: string) {
+function formatDate(date: string | null) {
+  if (!date) {
+    return '—'
+  }
+
   return new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     year: 'numeric',
   })
 }
@@ -28,6 +32,8 @@ function ApplicationTable({
             <th>Role</th>
             <th>Status</th>
             <th>Applied</th>
+            <th>Deadline</th>
+            <th>Link</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -36,7 +42,14 @@ function ApplicationTable({
           {applications.map((application) => (
             <tr key={application.id}>
               <td>{application.company}</td>
-              <td>{application.role}</td>
+              <td>
+                {application.role}
+                {application.notes && (
+                  <small className="role-notes">
+                    {application.notes}
+                  </small>
+                )}
+              </td>
               <td>
                 <span
                   className={`status status-${application.status.toLowerCase()}`}
@@ -45,6 +58,20 @@ function ApplicationTable({
                 </span>
               </td>
               <td>{formatDate(application.appliedDate)}</td>
+              <td>{formatDate(application.deadline)}</td>
+              <td>
+                {application.jobUrl ? (
+                  <a
+                    href={application.jobUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View role
+                  </a>
+                ) : (
+                  '—'
+                )}
+              </td>
               <td>
                 <div className="actions">
                   <button
@@ -69,7 +96,7 @@ function ApplicationTable({
 
           {applications.length === 0 && (
             <tr>
-              <td className="empty-state" colSpan={5}>
+              <td className="empty-state" colSpan={7}>
                 No applications match your search or filters.
               </td>
             </tr>

@@ -278,3 +278,120 @@ td:first-child {
   color: #687086;
   text-align: center;
 }
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(100%, 440px);
+  border: 1px solid #e3e7ef;
+  border-radius: 18px;
+  padding: 36px;
+  background: white;
+  box-shadow: 0 18px 50px rgb(23 32 51 / 10%);
+}
+
+.auth-card h1 {
+  margin: 8px 0;
+}
+
+.auth-card > p {
+  color: #687086;
+}
+
+.auth-card form,
+.auth-card label {
+  display: grid;
+  gap: 10px;
+}
+
+.auth-card form {
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.auth-card label {
+  font-weight: 700;
+}
+
+.auth-card input {
+  border: 1px solid #ccd2df;
+  border-radius: 8px;
+  padding: 11px 12px;
+  font: inherit;
+}
+
+.auth-card form button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px;
+  color: white;
+  background: #5b5bd6;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switch-auth-button {
+  width: 100%;
+  margin-top: 18px;
+  border: 0;
+  color: #5b5bd6;
+  background: transparent;
+  cursor: pointer;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.header .logout-button {
+  color: #5b5bd6;
+  background: white;
+  border: 1px solid #5b5bd6;
+}
+
+.application-form textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid #ccd2df;
+  border-radius: 8px;
+  padding: 11px 12px;
+  color: #172033;
+  background: white;
+  font: inherit;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.role-notes {
+  display: block;
+  max-width: 260px;
+  margin-top: 5px;
+  overflow: hidden;
+  color: #687086;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table a {
+  color: #5b5bd6;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+table a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .full-width {
+    grid-column: auto;
+  }
+}

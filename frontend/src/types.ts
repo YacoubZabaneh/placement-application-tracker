@@ -13,6 +13,9 @@ export type Application = {
   role: string
   status: ApplicationStatus
   appliedDate: string
+  deadline: string | null
+  jobUrl: string
+  notes: string
 }
 
 export type ApplicationData = Omit<Application, 'id'>

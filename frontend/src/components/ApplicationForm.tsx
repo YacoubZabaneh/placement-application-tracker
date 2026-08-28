@@ -24,6 +24,9 @@ function ApplicationForm({
       role: String(formData.get('role')),
       status: String(formData.get('status')) as ApplicationStatus,
       appliedDate: String(formData.get('appliedDate')),
+      deadline: String(formData.get('deadline')) || null,
+      jobUrl: String(formData.get('jobUrl')),
+      notes: String(formData.get('notes')),
     }
 
     onSave(applicationData)
@@ -78,6 +81,35 @@ function ApplicationForm({
             name="appliedDate"
             defaultValue={editingApplication?.appliedDate ?? ''}
             required
+          />
+        </label>
+
+        <label>
+          Deadline
+          <input
+            type="date"
+            name="deadline"
+            defaultValue={editingApplication?.deadline ?? ''}
+          />
+        </label>
+
+        <label>
+          Job link
+          <input
+            type="url"
+            name="jobUrl"
+            placeholder="https://company.com/jobs/..."
+            defaultValue={editingApplication?.jobUrl ?? ''}
+          />
+        </label>
+
+        <label className="full-width">
+          Notes
+          <textarea
+            name="notes"
+            rows={4}
+            placeholder="Interview details, contacts, or follow-up actions..."
+            defaultValue={editingApplication?.notes ?? ''}
           />
         </label>
 
