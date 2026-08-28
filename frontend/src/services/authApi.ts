@@ -9,7 +9,10 @@ type AuthResponse = {
   user?: AuthUser
 }
 
-const AUTH_URL = 'http://127.0.0.1:8765/api/auth'
+const API_URL =
+  import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8765/api'
+
+const AUTH_URL = `${API_URL}/auth`
 const TOKEN_KEY = 'placement_tracker_token'
 const USER_KEY = 'placement_tracker_user'
 
