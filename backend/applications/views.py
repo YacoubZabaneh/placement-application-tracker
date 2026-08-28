@@ -5,5 +5,10 @@ from .serializers import ApplicationSerializer
 
 
 class ApplicationViewSet(viewsets.ModelViewSet):
-    queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
+
+    def get_queryset(self):
+        return Application.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -8,6 +9,13 @@ class Application(models.Model):
         OFFER = "Offer", "Offer"
         REJECTED = "Rejected", "Rejected"
 
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="applications",
+        null=True,
+        blank=True,
+    )
     company = models.CharField(max_length=150)
     role = models.CharField(max_length=200)
     status = models.CharField(
